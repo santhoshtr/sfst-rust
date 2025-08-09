@@ -1,0 +1,3 @@
+[submodule "src/sfst"]
+	path = src/sfst
+	url = https://github.com/santhoshtr/sfst
