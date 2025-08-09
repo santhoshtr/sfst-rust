@@ -1,6 +1,8 @@
 [package]
 name = "sfst"
+description = "SFST (Stuttgart Finite State Transducer)"
 version = "0.1.0"
+license = "GPL-2.0-or-later"
 edition = "2024"
 
 [dependencies]
