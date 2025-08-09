@@ -154,31 +154,6 @@ cargo run --bin main
 
 The tests expect the test file `python/tests/easy.a` to exist. Make sure you have the complete SFST project structure.
 
-## Compatibility
-
-This binding is designed to be API-compatible with the Python SFST binding, making it easy to port existing Python code to Rust:
-
-**Python:**
-```python
-import sfst
-sfst.init("transducer.a")
-results = sfst.analyse("word")
-```
-
-**Rust:**
-```rust
-use sfst;
-sfst::init("transducer.a")?;
-let results = sfst::analyse("word")?;
-```
-
-## Safety
-
-- All C++ memory management is handled safely
-- Automatic cleanup prevents memory leaks
-- Null pointer checks and error handling
-- Safe string conversions between Rust and C++
-
 ## License
 
 This binding follows the same license as the original SFST library.
