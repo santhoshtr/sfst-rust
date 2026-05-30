@@ -43,40 +43,20 @@ This is a Rust binding for the SFST (Stuttgart Finite State Transducer Tools) li
 
 ## Usage
 
-### Functional API
-
-```rust
-use sfst;
-
-// Initialize transducer from file
-sfst::init("path/to/transducer.a")?;
-
-// Analyze a surface form
-let analysis = sfst::analyse("easier")?;
-println!("Analysis: {:?}", analysis); // ["easy<ADJ><comp>"]
-
-// Generate a surface form
-let generation = sfst::generate("easy<ADJ><comp>")?;
-println!("Generation: {:?}", generation); // ["easier"]
-
-// Manual cleanup
-sfst::cleanup();
-```
-
-### RAII API (Recommended)
-
 ```rust
 use sfst::Sfst;
 
-// Initialize with automatic cleanup
+// Load a transducer; it is freed automatically when `sfst` is dropped.
 let sfst = Sfst::new("path/to/transducer.a")?;
 
 // Analyze and generate
 let analysis = sfst.analyse("easier")?;
 let generation = sfst.generate("easy<ADJ><comp>")?;
-
-// Automatic cleanup when `sfst` goes out of scope
 ```
+
+Each `Sfst` owns its own transducer and instances are independent. A loaded
+transducer is read-only, so a single `Sfst` is `Send + Sync` and can be shared
+across threads (e.g. `Arc<Sfst>`) and queried concurrently without locking.
 
 ### Error Handling
 
@@ -87,9 +67,6 @@ match Sfst::new("transducer.a") {
     Ok(sfst) => {
         match sfst.analyse("word") {
             Ok(results) => println!("Results: {:?}", results),
-            Err(SfstError::TransducerNotInitialized) => {
-                eprintln!("Transducer not properly initialized");
-            }
             Err(e) => eprintln!("Error: {}", e),
         }
     }
@@ -102,16 +79,7 @@ match Sfst::new("transducer.a") {
 
 ## API Reference
 
-### Functions
-
-- `init(filename: &str) -> Result<(), SfstError>` - Initialize transducer from file
-- `analyse(input: &str) -> Result<Vec<String>, SfstError>` - Analyze a string
-- `generate(input: &str) -> Result<Vec<String>, SfstError>` - Generate a string
-- `cleanup()` - Manual cleanup (not needed with RAII API)
-
-### RAII Wrapper
-
-- `Sfst::new(filename: &str) -> Result<Sfst, SfstError>` - Create with automatic cleanup
+- `Sfst::new(filename: &str) -> Result<Sfst, SfstError>` - Load a transducer from a file
 - `sfst.analyse(input: &str) -> Result<Vec<String>, SfstError>` - Analyze a string
 - `sfst.generate(input: &str) -> Result<Vec<String>, SfstError>` - Generate a string
 
@@ -121,7 +89,6 @@ match Sfst::new("transducer.a") {
 pub enum SfstError {
     InvalidInput(String),     // Invalid input parameters
     FileError(String),        // File loading/reading errors
-    TransducerNotInitialized, // Transducer not initialized
     AllocationError,          // Memory allocation failure
 }
 ```

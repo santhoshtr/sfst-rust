@@ -8,52 +8,68 @@
 
 using namespace SFST;
 
-static Transducer *transducer = nullptr;
+// Each handle owns exactly one transducer. There is no shared global state, so
+// distinct handles are fully independent and a single loaded transducer is
+// read-only after construction (the binary-file constructor freezes the node
+// index), making concurrent queries on one handle race-free.
+struct SfstHandle {
+  Transducer *transducer;
+};
 
 extern "C" {
 
-int sfst_init(const char *filename) {
+SfstHandle *sfst_init(const char *filename, int *err) {
   if (filename == nullptr) {
-    return 1;
-  }
-
-  // Clean up existing transducer
-  if (transducer != nullptr) {
-    delete transducer;
-    transducer = nullptr;
+    if (err != nullptr) {
+      *err = 1;
+    }
+    return nullptr;
   }
 
   FILE *transducer_file = fopen(filename, "rb");
   if (transducer_file == nullptr) {
-    return 2;
+    if (err != nullptr) {
+      *err = 2;
+    }
+    return nullptr;
   }
 
   try {
-    transducer = new Transducer(transducer_file);
+    SfstHandle *handle = new SfstHandle;
+    handle->transducer = new Transducer(transducer_file);
     fclose(transducer_file);
-    return 0;
+    if (err != nullptr) {
+      *err = 0;
+    }
+    return handle;
   } catch (...) {
     fclose(transducer_file);
-    return 3;
+    if (err != nullptr) {
+      *err = 3;
+    }
+    return nullptr;
   }
 }
 
-void sfst_cleanup() {
-  if (transducer != nullptr) {
-    delete transducer;
-    transducer = nullptr;
+void sfst_cleanup(SfstHandle *handle) {
+  if (handle != nullptr) {
+    delete handle->transducer;
+    delete handle;
   }
 }
 
-char **sfst_analyse(const char *input, int *result_count) {
-  if (transducer == nullptr || input == nullptr || result_count == nullptr) {
-    *result_count = 0;
+char **sfst_analyse(SfstHandle *handle, const char *input, int *result_count) {
+  if (handle == nullptr || handle->transducer == nullptr || input == nullptr ||
+      result_count == nullptr) {
+    if (result_count != nullptr) {
+      *result_count = 0;
+    }
     return nullptr;
   }
 
   try {
     std::vector<std::string> results =
-        transducer->analyze_string(const_cast<char *>(input), true);
+        handle->transducer->analyze_string(const_cast<char *>(input), true);
     *result_count = static_cast<int>(results.size());
 
     if (results.empty()) {
@@ -89,15 +105,18 @@ char **sfst_analyse(const char *input, int *result_count) {
   }
 }
 
-char **sfst_generate(const char *input, int *result_count) {
-  if (transducer == nullptr || input == nullptr || result_count == nullptr) {
-    *result_count = 0;
+char **sfst_generate(SfstHandle *handle, const char *input, int *result_count) {
+  if (handle == nullptr || handle->transducer == nullptr || input == nullptr ||
+      result_count == nullptr) {
+    if (result_count != nullptr) {
+      *result_count = 0;
+    }
     return nullptr;
   }
 
   try {
     std::vector<std::string> results =
-        transducer->generate_string(const_cast<char *>(input), true);
+        handle->transducer->generate_string(const_cast<char *>(input), true);
     *result_count = static_cast<int>(results.size());
 
     if (results.empty()) {

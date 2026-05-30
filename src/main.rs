@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use sfst::Sfst;
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -43,19 +44,20 @@ fn main() {
             }
 
             // Initialize the transducer
-            match sfst::init(transducer.to_str().unwrap()) {
-                Ok(_) => {
+            let sfst = match Sfst::new(transducer.to_str().unwrap()) {
+                Ok(sfst) => {
                     if std::env::var("VERBOSE").is_ok() {
                         eprintln!("✓ Transducer loaded successfully from {:?}", transducer);
                     }
+                    sfst
                 }
                 Err(e) => {
                     eprintln!("Error: Failed to load transducer: {}", e);
                     std::process::exit(1);
                 }
-            }
+            };
 
-            match sfst::analyse(text) {
+            match sfst.analyse(text) {
                 Ok(results) => {
                     if results.is_empty() {
                         eprintln!("No analysis found for: {}", text);
@@ -81,19 +83,20 @@ fn main() {
             }
 
             // Initialize the transducer
-            match sfst::init(transducer.to_str().unwrap()) {
-                Ok(_) => {
+            let sfst = match Sfst::new(transducer.to_str().unwrap()) {
+                Ok(sfst) => {
                     if std::env::var("VERBOSE").is_ok() {
                         eprintln!("✓ Transducer loaded successfully from {:?}", transducer);
                     }
+                    sfst
                 }
                 Err(e) => {
                     eprintln!("Error: Failed to load transducer: {}", e);
                     std::process::exit(1);
                 }
-            }
+            };
 
-            match sfst::generate(text) {
+            match sfst.generate(text) {
                 Ok(results) => {
                     if results.is_empty() {
                         eprintln!("No generation found for: {}", text);
@@ -112,9 +115,6 @@ fn main() {
             }
         }
     };
-
-    // Cleanup
-    sfst::cleanup();
 
     // Exit with appropriate code
     if result.is_err() {

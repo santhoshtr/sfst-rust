@@ -6,29 +6,40 @@ extern "C" {
 #endif
 
 /**
- * Initialize the transducer from a file.
- * Returns 0 on success, non-zero on error.
+ * Opaque handle owning a single loaded transducer. Each handle is independent;
+ * dropping one never affects another.
  */
-int sfst_init(const char *filename);
+typedef struct SfstHandle SfstHandle;
 
 /**
- * Cleanup the transducer and free memory.
+ * Load a transducer from a file.
+ * On success returns a non-NULL handle and sets *err to 0.
+ * On failure returns NULL and sets *err to:
+ *   1 - filename is null
+ *   2 - could not open file
+ *   3 - error loading transducer
+ * The handle must be released with sfst_cleanup.
  */
-void sfst_cleanup();
+SfstHandle *sfst_init(const char *filename, int *err);
+
+/**
+ * Release a handle and free its transducer. Passing NULL is a no-op.
+ */
+void sfst_cleanup(SfstHandle *handle);
 
 /**
  * Analyze a string and return results.
  * result_count will be set to the number of results.
  * Returns array of strings that must be freed with sfst_free_results.
  */
-char **sfst_analyse(const char *input, int *result_count);
+char **sfst_analyse(SfstHandle *handle, const char *input, int *result_count);
 
 /**
  * Generate a string and return results.
  * result_count will be set to the number of results.
  * Returns array of strings that must be freed with sfst_free_results.
  */
-char **sfst_generate(const char *input, int *result_count);
+char **sfst_generate(SfstHandle *handle, const char *input, int *result_count);
 
 /**
  * Free the results returned by sfst_analyse or sfst_generate.
