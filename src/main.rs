@@ -5,7 +5,7 @@ use std::path::PathBuf;
 #[derive(Parser)]
 #[command(name = "sfst")]
 #[command(about = "SFST (Stuttgart Finite State Transducer) CLI tool")]
-#[command(version = "0.1.0")]
+#[command(version = "0.2.0")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
