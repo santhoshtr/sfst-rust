@@ -93,20 +93,6 @@ pub enum SfstError {
 }
 ```
 
-## File Structure
-
-```
-rust/
-├── Cargo.toml              # Package configuration
-├── README.md               # This file
-├── build.rs                # Build script for C++ compilation
-└── src/
-    ├── lib.rs              # Main library code
-    ├── main.rs             # Example/test binary
-    ├── sfst_wrapper.h      # C header for FFI
-    └── sfst_wrapper.cpp    # C++ wrapper implementation
-```
-
 ## Testing
 
 The crate includes comprehensive tests that mirror the Python test suite:
